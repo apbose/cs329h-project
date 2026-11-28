@@ -1,0 +1,139 @@
+% CS329H pre-analysis plan (due Wed 4 Nov 2026). NeurIPS 2025 style, 3-4 pages excluding references.
+% The three required statements follow the references.
+\documentclass{article}
+
+\usepackage[preprint]{../neurips_2025}
+\makeatletter
+\renewcommand{\@noticestring}{CS329H: Machine Learning from Human Preferences, Stanford University, Autumn 2026. Pre-analysis plan.}
+\makeatother
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue!60!black}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsfonts,amsmath,amssymb}
+\usepackage{microtype}
+\usepackage{xcolor}
+
+\title{Ask About Money, Keep the Questionnaire:\\What an AI Adviser Should Ask About Risk}
+
+\author{%
+  Apurba Bose \\
+  Stanford University \\
+}
+
+\newcommand{\EIG}{\operatorname{EIG}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Before investing a client's savings, an adviser must, by regulation, learn how much risk the client can stomach. Most rely on one 0--10 self-rating, which is cheap but noisy (people often give a different number months later); longer questionnaires are more reliable but tire clients. We ask how few questions are enough. We choose each question adaptively, by expected information gain under a Bayesian posterior, so none is wasted on a gamble the client will obviously accept or refuse. What counts as informative, and how far a few answers generalize, depend on the model of choice, so we compare four classes of increasing flexibility: expected utility with logit noise, prospect theory, a low-rank factor model shared across people, and a neural model. For each, we trace how prediction improves with more questions per client (one to ten) and more people to learn from, expecting simple models to win with little data and flexible ones as data grows. We test on simulated investors with known risk attitudes, and on the Basel--Berlin Risk Study (1,505 adults) and Twin-2K-500 (2,058 US adults), predicting held-out lottery choices and, in Basel--Berlin, self-reported stock investment, against equally many fixed questions and the self-rating alone. The 2022 Survey of Consumer Finances shows what the self-rating alone tells about 4,595 households' stock holdings.
+\end{abstract}
+
+\section{Overview and motivation}
+
+Before an adviser, human or automated, recommends how to invest a client's savings, US and EU rules require it to learn the client's risk tolerance. In practice this usually means one question: ``On a scale from 0 to 10, how willing are you to take financial risks?'' The answer is cheap to collect but noisy. In the Basel--Berlin Risk Study, the same people gave answers months apart that correlate only moderately~\citep{frey2017}. Longer questionnaires of choices between gambles average out some of this noise, but each extra question costs the client time, and clients may stop before the end.
+
+We ask how few questions an adviser needs, as a preference-learning problem. Each question is a binary choice between two gambles, or between a gamble and a sure amount. A model of choice turns the answers into a posterior over the client's risk attitude, and the adviser picks the next question to be as informative as possible under that posterior. A fixed short list wastes questions: a client who turned down a coin flip that wins \$1,200 or loses \$1,000 will also turn down one that wins \$1,000 or loses \$1,000, so asking the second tells the adviser nothing.
+
+What counts as an informative question, and how far a few answers generalize, depends on the model of choice. A one-parameter expected-utility model learns fast from little data but cannot represent loss aversion or probability weighting. A neural model can represent almost any pattern but needs many people to learn from. We therefore compare four model classes of increasing flexibility and trace two learning curves for each: prediction quality against the number of questions asked of a new client (one to ten) and against the number of people the model was trained on. Our working hypothesis is that simpler models are better when data are scarce and more flexible models overtake them as data grow, so the right number of questions depends on the model class and on how much population data the adviser has.
+
+\section{Related work}
+
+\paragraph{Measuring risk attitudes.}
+\citet{holt2002} introduced the multiple price list, a short series of paired gambles whose switching point identifies a person's risk aversion; it is the basis of the Basel--Berlin battery. \citet{dohmen2011} validated the 0--10 general risk question from the German Socio-Economic Panel (SOEP) against incentivized lottery choices and field behavior. \citet{frey2017} gave 1,507 adults 39 risk measures, including self-reports, frequency measures and behavioral tasks, and found that self-reports were more reliable over time and more strongly related to real-world risk taking than behavioral lottery tasks. \citet{pedroni2017} showed, with the same sample, that different behavioral elicitation methods give inconsistent estimates of the same person's risk preference. So a few lottery questions may not beat the self-rating unless they are chosen well and read through the right model.
+
+\paragraph{Adaptive elicitation.}
+Choosing the next question by expected information gain is the Bayesian optimal design criterion reviewed by \citet{chaloner1995}. \citet{houlsby2011} gave the form we use for binary responses (Bayesian active learning by disagreement, BALD), which needs only predictive probabilities under posterior samples. \citet{chapman2018dose} built Dynamically Optimized Sequential Experimentation (DOSE), which picks each next lottery question to be most informative about a person's prospect-theory parameters, and used it in a large representative survey~\citep{chapman2018econographics}.
+
+\paragraph{Model classes for risky choice.}
+Cumulative prospect theory~\citep{tversky1992} adds loss aversion and probability weighting to expected utility and is the standard behavioral alternative. \citet{peterson2021} collected choices on more than 13,000 risky-choice problems and found that, with that much data, neural networks predict better than classic theories. \citet{bourgin2019} showed that on smaller datasets networks predict poorly unless pretrained on synthetic choices from a behavioral model, which gives them a useful prior. \citet{fudenberg2022} measure how complete a theory is by comparing its predictive accuracy to the best achievable, as our learning curves do for each class. Low-rank factor models from collaborative filtering~\citep{koren2009} share structure across people and questions and sit between parametric theories and neural networks in flexibility.
+
+\paragraph{Advice and datasets.}
+\citet{dacunto2019} found that a robo-adviser improved diversification mainly for investors who started out under-diversified, so automated advice must fit the client. \citet{toubia2025} released Twin-2K-500, a survey of 2,058 US adults answering about 500 questions, including risk price lists, an independent test set with a different population and question format.
+
+\paragraph{How this project differs.}
+Compared with this work, the project changes three things. First, studies of risk measures~\citep{dohmen2011,frey2017,pedroni2017} compare full batteries of questions; we ask how many well-chosen lottery questions are needed to predict a person's other choices, and after how many the 0--10 self-rating stops adding information. Second, adaptive methods such as DOSE~\citep{chapman2018dose} choose questions under one fixed model; we run the same selection under four model classes and measure how the class changes both the questions asked and the accuracy reached. Third, model comparisons for risky choice~\citep{bourgin2019,peterson2021,fudenberg2022} pool many people's answers; we compare classes on the adviser's task, predicting one new person from a few answers, and trace how the ranking changes with the number of questions and with the number of people available for training.
+
+\section{Data}
+
+\paragraph{Simulated investors.}
+For each model class we draw synthetic people with known parameters from a population fitted to Basel--Berlin, simulate their answers to every question, and fit every model class to the simulated answers. This gives a $4 \times 4$ grid of true model by fitted model, to check parameter recovery, the selection code, and the cost of a wrong model class.
+
+\paragraph{Basel--Berlin Risk Study}~\citep[OSF, CC BY 4.0]{frey2017}.
+Of 1,507 adults, 1,505 answered all 66 incentivized binary choices between gambles (a Holt--Laury list and six further price lists) and both SOEP 0--10 self-ratings (general and financial). A subsample of 109 people was retested months later. Outcomes beyond the lottery choices are a hypothetical choice between a 25\% and a 45\% equity retirement fund, and a self-report of whether the person invested in individual stocks in the past year (1,320 answered). The public file codes the 0--10 ratings as 1--11; we recode them.
+
+\paragraph{Twin-2K-500}~\citep[CC BY 4.0]{toubia2025}.
+2,058 US adults answered seven price lists over 50/50 gambles (three over gains, three over losses, and one mixed gamble that measures loss aversion), each with 14 rows, for 98 binary choices per person. It has no 0--10 risk self-rating and no holdings, so we use it only to test how well a few answers predict the rest.
+
+\paragraph{Survey of Consumer Finances 2022} (Federal Reserve; public domain).
+4,595 households report their willingness to take financial risks on a 0--10 scale and their holdings. It has no lottery questions, so it cannot test question selection; it measures, in a representative US sample, how much the self-rating alone says about stock ownership and equity share beyond age, income, wealth and education.
+
+Basel--Berlin informed the design, so its results are exploratory; Twin-2K-500, not yet analyzed, is the confirmatory test.
+
+\section{Methods and analysis}
+
+\subsection{Choice models}
+Every model gives the probability that person $i$ chooses the riskier option in question $q$, mixed with a lapse rate $\varepsilon$ that captures random errors: $P(y_{iq} = 1) = \varepsilon/2 + (1 - \varepsilon)\,\sigma(s_{iq})$, where $\sigma$ is the logistic function. The four classes differ in the score $s_{iq}$.
+\begin{itemize}
+  \item \textbf{M1, expected utility with logit noise:} $s_{iq} = [\mathrm{EU}(\text{risky}; r_i) - \mathrm{EU}(\text{safe}; r_i)]/\tau$ with constant absolute risk aversion $u(x) = -\exp(-r_i x)$, so each person has one parameter $r_i$.
+  \item \textbf{M2, cumulative prospect theory:} $s_{iq}$ is the scaled difference in prospect-theory value, with person-level curvature $\alpha_i$, loss aversion $\lambda_i$ and probability weighting $\gamma_i$~\citep{tversky1992}.
+  \item \textbf{M3, low-rank factor model:} $s_{iq} = u_i^\top v_q + b_q$, where each question has a learned vector $v_q$ and offset $b_q$ and each person a $K$-dimensional vector $u_i$~\citep{koren2009}. $K$ is chosen on validation people.
+  \item \textbf{M4, neural model:} a small multilayer network takes the payoffs and probabilities of both options together with a person embedding $u_i$ and outputs $s_{iq}$. We train it with and without pretraining on synthetic choices from M2, following \citet{bourgin2019}.
+\end{itemize}
+In each class the person parameters have a population prior. Where a self-rating is available, the prior mean depends on it, so the rating and the answers combine in one posterior. Population parameters (prior, question vectors, network weights) are fitted by $L_2$-penalized maximum likelihood on training people, with the penalty chosen on validation people.
+
+\subsection{Question selection}
+After each answer we update the posterior over the new person's parameters $\theta$ (on a grid for M1, by importance sampling for M2, and by a Laplace approximation for the person vector in M3 and M4, with population parameters held fixed). The next question maximizes expected information gain,
+\begin{equation}
+  \EIG(q) = \mathrm{H}\!\left[\mathbb{E}_{\theta}\, p(y \mid \theta, q)\right] - \mathbb{E}_{\theta}\, \mathrm{H}\!\left[p(y \mid \theta, q)\right],
+\end{equation}
+\citep{houlsby2011}, estimated by Monte Carlo over posterior samples. Candidates are the questions the person actually answered, so we replay real answers. We compare it with three fixed orders of the same length: the best fixed order (chosen greedily on training people to minimize held-out loss), a random order, and the questionnaire's original order.
+
+\subsection{Evaluation}
+For each person in the test fold we hold out two whole price lists, rotating which ones, so that a test choice cannot be read off its neighbor in the same list. The procedure then asks $k = 0, 1, \dots, 10$ questions from the remaining lists; $k = 0$ uses the prior alone, including the self-rating where there is one. The primary metric is the mean log loss on the held-out choices; we also report accuracy and calibration. For the Basel--Berlin outcomes (stock investment and the fund choice), we predict the outcome from the posterior mean with a logistic regression fitted on training people, and report log loss and AUC.
+
+We trace two learning curves per model class: over $k = 0, \dots, 10$ at full training size, and over the number of training people $N \in \{50, 100, 200, 400, 800, \text{all}\}$ at $k = 5$. Models are fitted on training folds only (five folds, split by person), and intervals come from a paired bootstrap over test people. Datasets are analyzed separately and never pooled.
+
+In the SCF we regress stock ownership (survey-weighted logistic) and the equity share of owners (weighted linear) on age, age squared, log income, log net worth and education, with and without the 0--10 rating, and report the change in AUC and log loss, combining the five imputations with Rubin's rules.
+
+\subsection{Hypotheses and decision rules}
+\begin{description}
+  \item[H1 (model class and data).] At small $N$, M1 or M2 has the lowest held-out loss; as $N$ grows the gap to M3 and M4 narrows or reverses. We report the $N$ at which each flexible model first matches the best simple one, if any.
+  \item[H2 (adaptive versus fixed).] At $k = 5$, adaptive selection has lower held-out loss than the best fixed order of five questions, under the model class that is best at full $N$. Supported if the paired 95\% interval excludes zero.
+  \item[H3 (when the self-rating stops helping, Basel--Berlin only).] We find the smallest $k$ at which the upper end of the 95\% interval for the loss reduction from adding the self-rating to the prior falls below 0.01 nats per choice. If none up to 10 does, advisers should keep the self-rating.
+  \item[H4 (beyond the lab).] After $k$ adaptive questions, the posterior predicts Basel--Berlin stock investment at least as well as the self-rating alone, measured by AUC.
+\end{description}
+
+\paragraph{Connection to the course.}
+The project uses logit random utility (Lecture 3), factor and neural preference models (Lecture 4), regularized latent-variable maximum likelihood (Lecture 5), Bayesian estimation (Lecture 6), optimal experimental design (Lecture 7) and active elicitation (Lecture 10).
+
+\section{Timeline and responsibilities}
+This is an individual project, so Apurba Bose is responsible for every milestone below. If we fall behind, we cut in this order: the pretrained variant of M4, the random-order baseline, and the SCF equity-share regression; the four model classes, both learning curves and H1--H4 stay.
+
+\begingroup
+  \small\noindent
+  \begin{tabularx}{\linewidth}{@{}lX@{}}
+    \toprule
+    Week & Milestones \\
+    \midrule
+    1: 5--11 Nov & Data loaders (with the rating recode) and fixed folds; simulation harness; M1 with adaptive selection end to end on simulated investors. \\
+    2: 12--18 Nov & M2--M4 fitted; parameter recovery on the $4 \times 4$ grid; fixed-order baselines; SCF regressions. \\
+    3: 19--25 Nov & Learning curves and H1--H4 on Basel--Berlin, then one confirmatory run on Twin-2K-500; outcome prediction; figures. \\
+    4: 26 Nov--3 Dec & Robustness (lapse rate, prior strength, rank $K$); one script rebuilding every figure; manuscript, README, statements; submit 3 Dec. \\
+    \bottomrule
+  \end{tabularx}
+\par\endgroup
+
+\bibliographystyle{plainnat}
+\bibliography{../refs}
+
+\newpage
+\input{../statements}
+
+\end{document}

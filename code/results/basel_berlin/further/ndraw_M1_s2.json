@@ -1,0 +1,8 @@
+{
+ "data": "basel_berlin",
+ "check": "ndraw_M1_s2",
+ "model": "M1",
+ "prior": "rating",
+ "draw_seed": 2,
+ "seconds": 2
+}

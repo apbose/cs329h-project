@@ -1,0 +1,8 @@
+{
+ "data": "twin2k500",
+ "check": "ndraw_M2_s4",
+ "model": "M2",
+ "prior": "none",
+ "draw_seed": 4,
+ "seconds": 67
+}
